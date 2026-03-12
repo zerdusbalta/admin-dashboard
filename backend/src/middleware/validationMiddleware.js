@@ -4,6 +4,10 @@ function sendValidationError(res, message) {
     });
 }
 
+function normalizeEmail(value) {
+    return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
 function validateLogin(req, res, next) {
     const { email, password } = req.body;
 
@@ -11,7 +15,7 @@ function validateLogin(req, res, next) {
         return sendValidationError(res, "Email and password must be strings");
     }
 
-    const normalizedEmail = email.trim();
+    const normalizedEmail = normalizeEmail(email);
     const normalizedPassword = password.trim();
 
     if (!normalizedEmail || !normalizedPassword) {
@@ -26,6 +30,48 @@ function validateLogin(req, res, next) {
 
     req.body.email = normalizedEmail;
     req.body.password = normalizedPassword;
+
+    next();
+}
+
+function validateCreateUser(req, res, next) {
+    const { email, password, role } = req.body;
+
+    if (
+        typeof email !== "string" ||
+        typeof password !== "string" ||
+        typeof role !== "string"
+    ) {
+        return sendValidationError(res, "Email, password, and role must be strings");
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedPassword = password.trim();
+    const normalizedRole = role.trim().toLowerCase();
+
+    if (!normalizedEmail || !normalizedPassword || !normalizedRole) {
+        return sendValidationError(res, "Email, password, and role are required");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(normalizedEmail)) {
+        return sendValidationError(res, "Please enter a valid email address");
+    }
+
+    if (normalizedPassword.length < 6) {
+        return sendValidationError(res, "Password must be at least 6 characters long");
+    }
+
+    const allowedRoles = ["admin", "editor"];
+
+    if (!allowedRoles.includes(normalizedRole)) {
+        return sendValidationError(res, "Role must be either admin or editor");
+    }
+
+    req.body.email = normalizedEmail;
+    req.body.password = normalizedPassword;
+    req.body.role = normalizedRole;
 
     next();
 }
@@ -47,9 +93,8 @@ function validateProduct(req, res, next) {
         return sendValidationError(res, "Price cannot be negative");
     }
 
-    const parsedStock = stock === undefined || stock === null || stock === ""
-        ? 0
-        : Number(stock);
+    const parsedStock =
+        stock === undefined || stock === null || stock === "" ? 0 : Number(stock);
 
     if (!Number.isInteger(parsedStock)) {
         return sendValidationError(res, "Stock must be a whole number");
@@ -82,6 +127,7 @@ function validateProductId(req, res, next) {
 
 module.exports = {
     validateLogin,
+    validateCreateUser,
     validateProduct,
     validateProductId,
 };

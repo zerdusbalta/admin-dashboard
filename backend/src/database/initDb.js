@@ -8,6 +8,7 @@ function initDb() {
                                                  id INTEGER PRIMARY KEY AUTOINCREMENT,
                                                  email TEXT NOT NULL UNIQUE,
                                                  password TEXT NOT NULL,
+                                                 role TEXT NOT NULL DEFAULT 'admin',
                                                  createdAt TEXT NOT NULL
             )
         `);
@@ -37,8 +38,8 @@ function initDb() {
                     const hashedPassword = await bcrypt.hash("123456", 10);
 
                     db.run(
-                        `INSERT INTO users (email, password, createdAt) VALUES (?, ?, ?)`,
-                        ["admin@example.com", hashedPassword, now],
+                        `INSERT INTO users (email, password, role, createdAt) VALUES (?, ?, ?, ?)`,
+                        ["admin@example.com", hashedPassword, "admin", now],
                         (insertError) => {
                             if (insertError) {
                                 console.error("User seed insert error:", insertError.message);
