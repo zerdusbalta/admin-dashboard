@@ -1,52 +1,64 @@
 # Admin Dashboard
 
-A small SaaS-style admin dashboard built with Next.js, React, TypeScript and TailwindCSS.
+A modern admin dashboard project built with **Next.js**, **TypeScript**, **Express.js**, and **SQLite**.
 
-## Tech Stack
-
-- Next.js (App Router)
-- React
-- TypeScript
-- TailwindCSS
-- Vitest
+This project includes a frontend dashboard interface and a backend API with authentication and product management features. It was built to practice full-stack project structure, reusable UI components, table management, and API integration.
 
 ## Features
 
-- Mock authentication
-- Protected dashboard routes
-- User profile page
-- Customers module
-- Orders module
-- Invoices module
-- Search
-- Sorting
-- Pagination
-- Detail pages
-- Related record sections
-- Basic unit tests
+- Dashboard overview page
+- Customer, order, and invoice listing pages
+- Product management page
+- Create, update, and delete products
+- Login flow with backend authentication
+- Search, sorting, and pagination
+- Reusable layout and shared UI components
+- Frontend and backend separated into clean folders
+
+## Tech Stack
+
+### Frontend
+- Next.js
+- TypeScript
+- React
+- Tailwind CSS
+
+### Backend
+- Express.js
+- SQLite
+- Node.js
+
+### Tooling
+- Vitest
+- ESLint
+- Git & GitHub
 
 ## Project Structure
 
-- `src/app` → routes and layouts
-- `src/components` → shared and layout components
-- `src/features` → feature-specific logic
-- `src/data` → mock data
-- `src/lib` → table helpers and utilities
-
-## Authentication
-
-This project currently uses **mock authentication**.
-
-Demo login flow:
-- protected routes redirect unauthenticated users to `/login`
-- successful login stores a mock session cookie
-- logout clears the session cookie
-
-## Test Coverage
-
-Basic unit tests are included for:
-- pagination
-- search helpers
-- sort helpers
-- login validation
-
+```bash
+admin-dashboard/
+├── backend/
+│   ├── src/
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── database/
+│   │   ├── routes/
+│   │   ├── app.js
+│   │   └── server.js
+│   ├── .env
+│   ├── package.json
+│   └── README.md
+│
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   ├── components/
+│   │   ├── data/
+│   │   ├── features/
+│   │   ├── lib/
+│   │   └── types/
+│   ├── .env.local
+│   ├── package.json
+│   └── README.md
+│
+└── README.md

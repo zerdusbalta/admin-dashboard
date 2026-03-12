@@ -1,0 +1,58 @@
+import type { Invoice } from "../features/invoices/types/invoice.types";
+
+export const mockInvoices: Invoice[] = [
+    {
+        id: "inv_001",
+        invoiceNumber: "INV-2001",
+        orderNumber: "ORD-1001",
+        customerName: "John Carter",
+        amount: 240,
+        status: "paid",
+        issuedAt: "2025-02-02",
+    },
+    {
+        id: "inv_002",
+        invoiceNumber: "INV-2002",
+        orderNumber: "ORD-1002",
+        customerName: "Emily Stone",
+        amount: 120,
+        status: "unpaid",
+        issuedAt: "2025-02-04",
+    },
+    {
+        id: "inv_003",
+        invoiceNumber: "INV-2003",
+        orderNumber: "ORD-1003",
+        customerName: "Michael Brown",
+        amount: 520,
+        status: "overdue",
+        issuedAt: "2025-02-06",
+    },
+    {
+        id: "inv_004",
+        invoiceNumber: "INV-2004",
+        orderNumber: "ORD-1004",
+        customerName: "Sophia Turner",
+        amount: 310,
+        status: "paid",
+        issuedAt: "2025-02-09",
+    },
+    {
+        id: "inv_005",
+        invoiceNumber: "INV-2005",
+        orderNumber: "ORD-1005",
+        customerName: "Daniel White",
+        amount: 175,
+        status: "unpaid",
+        issuedAt: "2025-02-11",
+    },
+    {
+        id: "inv_006",
+        invoiceNumber: "INV-2006",
+        orderNumber: "ORD-1006",
+        customerName: "Olivia Green",
+        amount: 890,
+        status: "paid",
+        issuedAt: "2025-02-15",
+    },
+];
