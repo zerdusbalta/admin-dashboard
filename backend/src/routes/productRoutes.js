@@ -6,8 +6,11 @@ const {
     updateProduct,
     deleteProduct,
 } = require("../controllers/productController");
+const authenticateToken = require("../middleware/authMiddleware");
 
 const router = express.Router();
+
+router.use(authenticateToken);
 
 router.get("/", getAllProducts);
 router.get("/:id", getProductById);

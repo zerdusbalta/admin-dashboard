@@ -1,42 +1,53 @@
+const bcrypt = require("bcryptjs");
 const db = require("../config/db");
 
 function initDb() {
     db.serialize(() => {
         db.run(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        createdAt TEXT NOT NULL
-      )
-    `);
+            CREATE TABLE IF NOT EXISTS users (
+                                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                 email TEXT NOT NULL UNIQUE,
+                                                 password TEXT NOT NULL,
+                                                 createdAt TEXT NOT NULL
+            )
+        `);
 
         db.run(`
-      CREATE TABLE IF NOT EXISTS products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        description TEXT,
-        price REAL NOT NULL,
-        category TEXT,
-        stock INTEGER DEFAULT 0,
-        createdAt TEXT NOT NULL,
-        updatedAt TEXT NOT NULL
-      )
-    `);
+            CREATE TABLE IF NOT EXISTS products (
+                                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                    name TEXT NOT NULL,
+                                                    description TEXT,
+                                                    price REAL NOT NULL,
+                                                    category TEXT,
+                                                    stock INTEGER DEFAULT 0,
+                                                    createdAt TEXT NOT NULL,
+                                                    updatedAt TEXT NOT NULL
+            )
+        `);
 
-        db.get(`SELECT COUNT(*) AS count FROM users`, (error, row) => {
+        db.get(`SELECT COUNT(*) AS count FROM users`, async (error, row) => {
             if (error) {
                 console.error("Users seed check error:", error.message);
                 return;
             }
 
             if (row.count === 0) {
-                const now = new Date().toISOString();
+                try {
+                    const now = new Date().toISOString();
+                    const hashedPassword = await bcrypt.hash("123456", 10);
 
-                db.run(
-                    `INSERT INTO users (email, password, createdAt) VALUES (?, ?, ?)`,
-                    ["admin@example.com", "123456", now]
-                );
+                    db.run(
+                        `INSERT INTO users (email, password, createdAt) VALUES (?, ?, ?)`,
+                        ["admin@example.com", hashedPassword, now],
+                        (insertError) => {
+                            if (insertError) {
+                                console.error("User seed insert error:", insertError.message);
+                            }
+                        }
+                    );
+                } catch (hashError) {
+                    console.error("Password hash error:", hashError.message);
+                }
             }
         });
 
@@ -50,9 +61,9 @@ function initDb() {
                 const now = new Date().toISOString();
 
                 const statement = db.prepare(`
-          INSERT INTO products (name, description, price, category, stock, createdAt, updatedAt)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `);
+                    INSERT INTO products (name, description, price, category, stock, createdAt, updatedAt)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                `);
 
                 const products = [
                     ["Keyboard", "Mechanical keyboard", 99.99, "Electronics", 12, now, now],
