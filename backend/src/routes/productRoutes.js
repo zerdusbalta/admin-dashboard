@@ -7,15 +7,19 @@ const {
     deleteProduct,
 } = require("../controllers/productController");
 const authenticateToken = require("../middleware/authMiddleware");
+const {
+    validateProduct,
+    validateProductId,
+} = require("../middleware/validationMiddleware");
 
 const router = express.Router();
 
 router.use(authenticateToken);
 
 router.get("/", getAllProducts);
-router.get("/:id", getProductById);
-router.post("/", createProduct);
-router.put("/:id", updateProduct);
-router.delete("/:id", deleteProduct);
+router.get("/:id", validateProductId, getProductById);
+router.post("/", validateProduct, createProduct);
+router.put("/:id", validateProductId, validateProduct, updateProduct);
+router.delete("/:id", validateProductId, deleteProduct);
 
 module.exports = router;

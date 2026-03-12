@@ -56,29 +56,14 @@ function getProductById(req, res) {
 
 function createProduct(req, res) {
     const { name, description, price, category, stock } = req.body;
-
-    if (!name || price === undefined) {
-        return res.status(400).json({
-            message: "Name and price are required",
-        });
-    }
-
     const now = new Date().toISOString();
 
     db.run(
         `
-      INSERT INTO products (name, description, price, category, stock, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `,
-        [
-            name,
-            description || "",
-            Number(price),
-            category || "",
-            stock ?? 0,
-            now,
-            now,
-        ],
+            INSERT INTO products (name, description, price, category, stock, createdAt, updatedAt)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `,
+        [name, description, price, category, stock, now, now],
         function (error) {
             if (error) {
                 return res.status(500).json({
@@ -97,30 +82,15 @@ function createProduct(req, res) {
 function updateProduct(req, res) {
     const { id } = req.params;
     const { name, description, price, category, stock } = req.body;
-
-    if (!name || price === undefined) {
-        return res.status(400).json({
-            message: "Name and price are required",
-        });
-    }
-
     const now = new Date().toISOString();
 
     db.run(
         `
-      UPDATE products
-      SET name = ?, description = ?, price = ?, category = ?, stock = ?, updatedAt = ?
-      WHERE id = ?
-    `,
-        [
-            name,
-            description || "",
-            Number(price),
-            category || "",
-            stock ?? 0,
-            now,
-            id,
-        ],
+            UPDATE products
+            SET name = ?, description = ?, price = ?, category = ?, stock = ?, updatedAt = ?
+            WHERE id = ?
+        `,
+        [name, description, price, category, stock, now, id],
         function (error) {
             if (error) {
                 return res.status(500).json({
