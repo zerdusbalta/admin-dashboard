@@ -1,15 +1,14 @@
 const db = require("../config/db");
+const AppError = require("../utils/AppError");
 
-function getAllProducts(req, res) {
+function getAllProducts(req, res, next) {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
     db.get(`SELECT COUNT(*) AS total FROM products`, (countError, countRow) => {
         if (countError) {
-            return res.status(500).json({
-                message: "Database error",
-            });
+            return next(new AppError("Database error", 500));
         }
 
         db.all(
@@ -17,9 +16,7 @@ function getAllProducts(req, res) {
             [limit, offset],
             (error, rows) => {
                 if (error) {
-                    return res.status(500).json({
-                        message: "Database error",
-                    });
+                    return next(new AppError("Database error", 500));
                 }
 
                 return res.json({
@@ -34,27 +31,23 @@ function getAllProducts(req, res) {
     });
 }
 
-function getProductById(req, res) {
+function getProductById(req, res, next) {
     const { id } = req.params;
 
     db.get(`SELECT * FROM products WHERE id = ?`, [id], (error, row) => {
         if (error) {
-            return res.status(500).json({
-                message: "Database error",
-            });
+            return next(new AppError("Database error", 500));
         }
 
         if (!row) {
-            return res.status(404).json({
-                message: "Product not found",
-            });
+            return next(new AppError("Product not found", 404));
         }
 
         return res.json(row);
     });
 }
 
-function createProduct(req, res) {
+function createProduct(req, res, next) {
     const { name, description, price, category, stock } = req.body;
     const now = new Date().toISOString();
 
@@ -66,9 +59,7 @@ function createProduct(req, res) {
         [name, description, price, category, stock, now, now],
         function (error) {
             if (error) {
-                return res.status(500).json({
-                    message: "Database error",
-                });
+                return next(new AppError("Database error", 500));
             }
 
             return res.status(201).json({
@@ -79,7 +70,7 @@ function createProduct(req, res) {
     );
 }
 
-function updateProduct(req, res) {
+function updateProduct(req, res, next) {
     const { id } = req.params;
     const { name, description, price, category, stock } = req.body;
     const now = new Date().toISOString();
@@ -93,15 +84,11 @@ function updateProduct(req, res) {
         [name, description, price, category, stock, now, id],
         function (error) {
             if (error) {
-                return res.status(500).json({
-                    message: "Database error",
-                });
+                return next(new AppError("Database error", 500));
             }
 
             if (this.changes === 0) {
-                return res.status(404).json({
-                    message: "Product not found",
-                });
+                return next(new AppError("Product not found", 404));
             }
 
             return res.json({
@@ -111,20 +98,16 @@ function updateProduct(req, res) {
     );
 }
 
-function deleteProduct(req, res) {
+function deleteProduct(req, res, next) {
     const { id } = req.params;
 
     db.run(`DELETE FROM products WHERE id = ?`, [id], function (error) {
         if (error) {
-            return res.status(500).json({
-                message: "Database error",
-            });
+            return next(new AppError("Database error", 500));
         }
 
         if (this.changes === 0) {
-            return res.status(404).json({
-                message: "Product not found",
-            });
+            return next(new AppError("Product not found", 404));
         }
 
         return res.json({

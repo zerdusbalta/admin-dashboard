@@ -1,8 +1,9 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../config/db");
+const AppError = require("../utils/AppError");
 
-function login(req, res) {
+function login(req, res, next) {
     const { email, password } = req.body;
 
     db.get(
@@ -10,24 +11,18 @@ function login(req, res) {
         [email],
         async (error, user) => {
             if (error) {
-                return res.status(500).json({
-                    message: "Database error",
-                });
+                return next(new AppError("Database error", 500));
             }
 
             if (!user) {
-                return res.status(401).json({
-                    message: "Invalid credentials",
-                });
+                return next(new AppError("Invalid credentials", 401));
             }
 
             try {
                 const isPasswordValid = await bcrypt.compare(password, user.password);
 
                 if (!isPasswordValid) {
-                    return res.status(401).json({
-                        message: "Invalid credentials",
-                    });
+                    return next(new AppError("Invalid credentials", 401));
                 }
 
                 const token = jwt.sign(
@@ -50,9 +45,7 @@ function login(req, res) {
                     },
                 });
             } catch (compareError) {
-                return res.status(500).json({
-                    message: "Authentication error",
-                });
+                return next(new AppError("Authentication error", 500));
             }
         }
     );

@@ -5,6 +5,8 @@ const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/productRoutes");
 const requestLogger = require("./middleware/requestLogger");
 const { authRateLimiter } = require("./middleware/rateLimitMiddleware");
+const notFoundMiddleware = require("./middleware/notFoundMiddleware");
+const errorHandlerMiddleware = require("./middleware/errorHandlerMiddleware");
 
 const app = express();
 
@@ -19,5 +21,8 @@ app.get("/", (req, res) => {
 app.use("/auth/login", authRateLimiter);
 app.use("/auth", authRoutes);
 app.use("/products", productRoutes);
+
+app.use(notFoundMiddleware);
+app.use(errorHandlerMiddleware);
 
 module.exports = app;
