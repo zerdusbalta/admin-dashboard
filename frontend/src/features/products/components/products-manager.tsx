@@ -18,17 +18,27 @@ export default function ProductsManager({
     const router = useRouter();
 
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [showCreateForm, setShowCreateForm] = useState(false);
     const [actionError, setActionError] = useState("");
     const [actionSuccess, setActionSuccess] = useState("");
 
-    function handleEdit(product: Product) {
-        setSelectedProduct(product);
+    function handleOpenCreate() {
+        setSelectedProduct(null);
+        setShowCreateForm(true);
         setActionError("");
         setActionSuccess("");
     }
 
-    function handleCancelEdit() {
+    function handleEdit(product: Product) {
+        setSelectedProduct(product);
+        setShowCreateForm(true);
+        setActionError("");
+        setActionSuccess("");
+    }
+
+    function handleCloseForm() {
         setSelectedProduct(null);
+        setShowCreateForm(false);
     }
 
     async function handleDelete(product: Product) {
@@ -48,6 +58,7 @@ export default function ProductsManager({
 
             if (selectedProduct?.id === product.id) {
                 setSelectedProduct(null);
+                setShowCreateForm(false);
             }
 
             setActionSuccess("Product deleted successfully.");
@@ -74,10 +85,24 @@ export default function ProductsManager({
                 </div>
             ) : null}
 
-            <ProductForm
-                selectedProduct={selectedProduct}
-                onCancelEditAction={handleCancelEdit}
-            />
+            <div className="flex justify-end">
+                {!showCreateForm ? (
+                    <button
+                        type="button"
+                        onClick={handleOpenCreate}
+                        className="inline-flex h-10 items-center justify-center rounded-lg bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-800"
+                    >
+                        Create Product
+                    </button>
+                ) : null}
+            </div>
+
+            {showCreateForm ? (
+                <ProductForm
+                    selectedProduct={selectedProduct}
+                    onCancelEditAction={handleCloseForm}
+                />
+            ) : null}
 
             <div className="pt-2">
                 <ProductsTable

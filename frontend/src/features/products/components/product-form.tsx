@@ -75,25 +75,21 @@ export default function ProductForm({
                     stock: Number(stock || 0),
                 });
 
-                setSuccess("Product updated successfully.");
-            } else {
-                await createProduct({
-                    name: name.trim(),
-                    description: description.trim(),
-                    price: Number(price),
-                    category: category.trim(),
-                    stock: Number(stock || 0),
-                });
-
-                setSuccess("Product created successfully.");
-                setName("");
-                setDescription("");
-                setPrice("");
-                setCategory("");
-                setStock("");
+                router.refresh();
+                onCancelEditAction();
+                return;
             }
 
+            await createProduct({
+                name: name.trim(),
+                description: description.trim(),
+                price: Number(price),
+                category: category.trim(),
+                stock: Number(stock || 0),
+            });
+
             router.refresh();
+            onCancelEditAction();
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : "Something went wrong.";
@@ -118,15 +114,13 @@ export default function ProductForm({
                     </p>
                 </div>
 
-                {isEditMode ? (
-                    <button
-                        type="button"
-                        onClick={onCancelEditAction}
-                        className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                    >
-                        Cancel Edit
-                    </button>
-                ) : null}
+                <button
+                    type="button"
+                    onClick={onCancelEditAction}
+                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                >
+                    {isEditMode ? "Cancel Edit" : "Close"}
+                </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -204,16 +198,11 @@ export default function ProductForm({
                     </div>
                 ) : null}
 
-                {success ? (
-                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                        {success}
-                    </div>
-                ) : null}
-
                 <button
                     type="submit"
                     disabled={loading}
-                    className="inline-flex h-10 min-w-[132px] items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60" >
+                    className="inline-flex h-10 min-w-[132px] items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
                     {loading
                         ? isEditMode
                             ? "Updating..."

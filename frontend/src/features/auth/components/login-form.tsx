@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { AUTH_COOKIE_NAME } from "../utils/auth-session";
+import { setAuthToken } from "../utils/auth-session";
 
 export default function LoginForm() {
     const router = useRouter();
@@ -38,7 +38,13 @@ export default function LoginForm() {
                 return;
             }
 
-            document.cookie = `${AUTH_COOKIE_NAME}=true; path=/`;
+            if (!data.token) {
+                setError("Login succeeded but no token was returned.");
+                return;
+            }
+
+            setAuthToken(data.token);
+
             router.push("/");
             router.refresh();
         } catch {

@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../../../lib/api";
+import { API_BASE_URL, getAuthHeaders } from "@/lib/api";
 
 type CreateProductInput = {
     name: string;
@@ -13,6 +13,7 @@ export async function createProduct(input: CreateProductInput) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            ...getAuthHeaders(),
         },
         body: JSON.stringify(input),
     });

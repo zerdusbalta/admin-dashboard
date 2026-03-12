@@ -1,14 +1,14 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import LoginForm from "../../../features/auth/components/login-form";
-import { AUTH_COOKIE_NAME } from "../../../features/auth/utils/auth-session";
+import LoginForm from "@/features/auth/components/login-form";
+import { AUTH_COOKIE_NAME } from "@/features/auth/utils/auth-session";
 
 export default async function LoginPage() {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(AUTH_COOKIE_NAME)?.value;
 
-    if (sessionCookie === "true") {
+    if (sessionCookie) {
         redirect("/");
     }
 
