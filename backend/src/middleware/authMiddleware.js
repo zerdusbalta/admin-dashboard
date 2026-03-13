@@ -43,7 +43,11 @@ function authorizeRoles(...allowedRoles) {
     };
 }
 
-function canManageRole(actorRole, targetRole) {
+function canManageRole(actorRole, actorIsPrimaryAdmin, targetRole) {
+    if (actorRole === "admin" && actorIsPrimaryAdmin) {
+        return ["admin", "editor", "staff"].includes(targetRole);
+    }
+
     if (actorRole === "admin") {
         return ["editor", "staff"].includes(targetRole);
     }

@@ -9,7 +9,7 @@ function login(req, res, next) {
     const { email, password } = req.body;
 
     db.get(
-        `SELECT id, email, password, role FROM users WHERE email = ?`,
+        `SELECT id, email, password, role, isPrimaryAdmin FROM users WHERE email = ?`,
         [email],
         async (error, user) => {
             if (error) {
@@ -27,11 +27,14 @@ function login(req, res, next) {
                     return next(new AppError("Invalid credentials", 401));
                 }
 
+                const isPrimaryAdmin = Boolean(user.isPrimaryAdmin);
+
                 const token = jwt.sign(
                     {
                         id: user.id,
                         email: user.email,
                         role: user.role,
+                        isPrimaryAdmin,
                     },
                     process.env.JWT_SECRET,
                     {
@@ -46,6 +49,7 @@ function login(req, res, next) {
                         id: user.id,
                         email: user.email,
                         role: user.role,
+                        isPrimaryAdmin,
                     },
                 });
             } catch (compareError) {
@@ -58,8 +62,9 @@ function login(req, res, next) {
 function createUser(req, res, next) {
     const { email, password, role } = req.body;
     const actorRole = req.user?.role || "admin";
+    const actorIsPrimaryAdmin = Boolean(req.user?.isPrimaryAdmin);
 
-    if (!canManageRole(actorRole, role)) {
+    if (!canManageRole(actorRole, actorIsPrimaryAdmin, role)) {
         return next(new AppError("You do not have permission to assign this role", 403));
     }
 
@@ -78,10 +83,11 @@ function createUser(req, res, next) {
             try {
                 const now = new Date().toISOString();
                 const hashedPassword = await bcrypt.hash(password, 10);
+                const isPrimaryAdmin = 0;
 
                 db.run(
-                    `INSERT INTO users (email, password, role, createdAt) VALUES (?, ?, ?, ?)`,
-                    [email, hashedPassword, role, now],
+                    `INSERT INTO users (email, password, role, isPrimaryAdmin, createdAt) VALUES (?, ?, ?, ?, ?)`,
+                    [email, hashedPassword, role, isPrimaryAdmin, now],
                     function (insertError) {
                         if (insertError) {
                             return next(new AppError("Database error", 500));
@@ -96,6 +102,7 @@ function createUser(req, res, next) {
                             details: {
                                 email,
                                 role,
+                                isPrimaryAdmin: false,
                             },
                         });
 
@@ -105,6 +112,7 @@ function createUser(req, res, next) {
                                 id: this.lastID,
                                 email,
                                 role,
+                                isPrimaryAdmin: false,
                             },
                         });
                     }
@@ -182,7 +190,7 @@ function changePassword(req, res, next) {
 function getUsers(req, res, next) {
     if (req.user.role === "admin") {
         return db.all(
-            `SELECT id, email, role, createdAt FROM users ORDER BY id ASC`,
+            `SELECT id, email, role, isPrimaryAdmin, createdAt FROM users ORDER BY id ASC`,
             [],
             (error, rows) => {
                 if (error) {
@@ -190,7 +198,10 @@ function getUsers(req, res, next) {
                 }
 
                 return res.json({
-                    data: rows,
+                    data: rows.map((row) => ({
+                        ...row,
+                        isPrimaryAdmin: Boolean(row.isPrimaryAdmin),
+                    })),
                 });
             }
         );
@@ -198,7 +209,7 @@ function getUsers(req, res, next) {
 
     if (req.user.role === "editor") {
         return db.all(
-            `SELECT id, email, role, createdAt FROM users WHERE role = ? ORDER BY id ASC`,
+            `SELECT id, email, role, isPrimaryAdmin, createdAt FROM users WHERE role = ? ORDER BY id ASC`,
             ["staff"],
             (error, rows) => {
                 if (error) {
@@ -206,7 +217,10 @@ function getUsers(req, res, next) {
                 }
 
                 return res.json({
-                    data: rows,
+                    data: rows.map((row) => ({
+                        ...row,
+                        isPrimaryAdmin: Boolean(row.isPrimaryAdmin),
+                    })),
                 });
             }
         );
@@ -219,6 +233,7 @@ function updateUserRole(req, res, next) {
     const userIdToUpdate = Number(req.params.id);
     const currentUserId = Number(req.user.id);
     const actorRole = req.user.role;
+    const actorIsPrimaryAdmin = Boolean(req.user.isPrimaryAdmin);
     const { role } = req.body;
 
     if (userIdToUpdate === currentUserId) {
@@ -226,7 +241,7 @@ function updateUserRole(req, res, next) {
     }
 
     db.get(
-        `SELECT id, role FROM users WHERE id = ?`,
+        `SELECT id, role, isPrimaryAdmin FROM users WHERE id = ?`,
         [userIdToUpdate],
         (selectError, targetUser) => {
             if (selectError) {
@@ -237,7 +252,14 @@ function updateUserRole(req, res, next) {
                 return next(new AppError("User not found", 404));
             }
 
-            if (!canManageRole(actorRole, targetUser.role) || !canManageRole(actorRole, role)) {
+            if (targetUser.isPrimaryAdmin) {
+                return next(new AppError("Primary admin role cannot be changed here", 403));
+            }
+
+            if (
+                !canManageRole(actorRole, actorIsPrimaryAdmin, targetUser.role) ||
+                !canManageRole(actorRole, actorIsPrimaryAdmin, role)
+            ) {
                 return next(new AppError("You do not have permission to change this role", 403));
             }
 
@@ -278,13 +300,14 @@ function deleteUser(req, res, next) {
     const userIdToDelete = Number(req.params.id);
     const currentUserId = Number(req.user.id);
     const actorRole = req.user.role;
+    const actorIsPrimaryAdmin = Boolean(req.user.isPrimaryAdmin);
 
     if (userIdToDelete === currentUserId) {
         return next(new AppError("You cannot delete your own account", 400));
     }
 
     db.get(
-        `SELECT id, email, role FROM users WHERE id = ?`,
+        `SELECT id, email, role, isPrimaryAdmin FROM users WHERE id = ?`,
         [userIdToDelete],
         (selectError, targetUser) => {
             if (selectError) {
@@ -295,7 +318,11 @@ function deleteUser(req, res, next) {
                 return next(new AppError("User not found", 404));
             }
 
-            if (!canManageRole(actorRole, targetUser.role)) {
+            if (targetUser.isPrimaryAdmin) {
+                return next(new AppError("Primary admin cannot be deleted here", 403));
+            }
+
+            if (!canManageRole(actorRole, actorIsPrimaryAdmin, targetUser.role)) {
                 return next(new AppError("You do not have permission to delete this user", 403));
             }
 
@@ -320,6 +347,7 @@ function deleteUser(req, res, next) {
                         details: {
                             email: targetUser.email,
                             deletedRole: targetUser.role,
+                            deletedPrimaryAdmin: Boolean(targetUser.isPrimaryAdmin),
                         },
                     });
 
