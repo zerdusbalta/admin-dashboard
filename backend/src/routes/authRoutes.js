@@ -6,6 +6,7 @@ const {
     getUsers,
     updateUserRole,
     deleteUser,
+    getAuditLogs,
     logout,
 } = require("../controllers/authController");
 const {
@@ -53,6 +54,13 @@ router.delete(
     authenticateToken,
     authorizeRoles("admin", "editor"),
     deleteUser
+);
+
+router.get(
+    "/audit-logs",
+    authenticateToken,
+    authorizeRoles("admin", "editor"),
+    getAuditLogs
 );
 
 router.post("/logout", logout);
