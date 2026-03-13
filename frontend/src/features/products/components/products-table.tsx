@@ -55,7 +55,13 @@ export default function ProductsTable({
                                 <p className="text-sm font-semibold text-slate-900">
                                     {product.name}
                                 </p>
-                                <p className="mt-1 text-xs text-slate-400">ID: {product.id}</p>
+                                <p className="mt-1 text-xs text-slate-400">
+                                    ID: {product.id}
+                                </p>
+                                <div className="mt-2 space-y-1 text-xs text-slate-500">
+                                    <p>Created by user #{product.createdBy}</p>
+                                    <p>Updated by user #{product.updatedBy}</p>
+                                </div>
                             </td>
 
                             <td className="whitespace-nowrap px-6 py-4 align-top text-sm text-slate-600">
@@ -67,17 +73,17 @@ export default function ProductsTable({
                             </td>
 
                             <td className="whitespace-nowrap px-6 py-4 align-top">
-                  <span
-                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-                          product.stock > 10
-                              ? "bg-emerald-100 text-emerald-700"
-                              : product.stock > 0
-                                  ? "bg-amber-100 text-amber-700"
-                                  : "bg-rose-100 text-rose-700"
-                      }`}
-                  >
-                    {product.stock}
-                  </span>
+                                    <span
+                                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                                            product.stock > 10
+                                                ? "bg-emerald-100 text-emerald-700"
+                                                : product.stock > 0
+                                                    ? "bg-amber-100 text-amber-700"
+                                                    : "bg-rose-100 text-rose-700"
+                                        }`}
+                                    >
+                                        {product.stock}
+                                    </span>
                             </td>
 
                             <td className="px-6 py-4 align-top text-sm text-slate-600">
@@ -91,14 +97,16 @@ export default function ProductsTable({
                                     <button
                                         type="button"
                                         onClick={() => onEditAction(product)}
-                                        className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50" >
+                                        className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                    >
                                         Edit
                                     </button>
 
                                     <button
                                         type="button"
                                         onClick={() => onDeleteAction(product)}
-                                        className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-200 bg-white px-3.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50">
+                                        className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-200 bg-white px-3.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
+                                    >
                                         Delete
                                     </button>
                                 </div>

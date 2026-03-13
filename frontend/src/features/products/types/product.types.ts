@@ -7,6 +7,8 @@ export type Product = {
     stock: number;
     createdAt: string;
     updatedAt: string;
+    createdBy: number;
+    updatedBy: number;
 };
 
 export type PaginatedProductsResponse = {
