@@ -76,6 +76,46 @@ function validateCreateUser(req, res, next) {
     next();
 }
 
+function validateChangePassword(req, res, next) {
+    const { currentPassword, newPassword } = req.body;
+
+    if (typeof currentPassword !== "string" || typeof newPassword !== "string") {
+        return sendValidationError(
+            res,
+            "Current password and new password must be strings"
+        );
+    }
+
+    const normalizedCurrentPassword = currentPassword.trim();
+    const normalizedNewPassword = newPassword.trim();
+
+    if (!normalizedCurrentPassword || !normalizedNewPassword) {
+        return sendValidationError(
+            res,
+            "Current password and new password are required"
+        );
+    }
+
+    if (normalizedNewPassword.length < 6) {
+        return sendValidationError(
+            res,
+            "New password must be at least 6 characters long"
+        );
+    }
+
+    if (normalizedCurrentPassword === normalizedNewPassword) {
+        return sendValidationError(
+            res,
+            "New password must be different from the current password"
+        );
+    }
+
+    req.body.currentPassword = normalizedCurrentPassword;
+    req.body.newPassword = normalizedNewPassword;
+
+    next();
+}
+
 function validateProduct(req, res, next) {
     const { name, description, price, category, stock } = req.body;
 
@@ -128,6 +168,7 @@ function validateProductId(req, res, next) {
 module.exports = {
     validateLogin,
     validateCreateUser,
+    validateChangePassword,
     validateProduct,
     validateProductId,
 };

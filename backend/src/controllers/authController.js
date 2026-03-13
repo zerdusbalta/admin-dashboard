@@ -56,41 +56,97 @@ function login(req, res, next) {
 function createUser(req, res, next) {
     const { email, password, role } = req.body;
 
-    db.get(`SELECT id FROM users WHERE email = ?`, [email], async (selectError, existingUser) => {
-        if (selectError) {
-            return next(new AppError("Database error", 500));
-        }
+    db.get(
+        `SELECT id FROM users WHERE email = ?`,
+        [email],
+        async (selectError, existingUser) => {
+            if (selectError) {
+                return next(new AppError("Database error", 500));
+            }
 
-        if (existingUser) {
-            return next(new AppError("A user with this email already exists", 409));
-        }
+            if (existingUser) {
+                return next(new AppError("A user with this email already exists", 409));
+            }
 
-        try {
-            const now = new Date().toISOString();
-            const hashedPassword = await bcrypt.hash(password, 10);
+            try {
+                const now = new Date().toISOString();
+                const hashedPassword = await bcrypt.hash(password, 10);
 
-            db.run(
-                `INSERT INTO users (email, password, role, createdAt) VALUES (?, ?, ?, ?)`,
-                [email, hashedPassword, role, now],
-                function (insertError) {
-                    if (insertError) {
-                        return next(new AppError("Database error", 500));
+                db.run(
+                    `INSERT INTO users (email, password, role, createdAt) VALUES (?, ?, ?, ?)`,
+                    [email, hashedPassword, role, now],
+                    function (insertError) {
+                        if (insertError) {
+                            return next(new AppError("Database error", 500));
+                        }
+
+                        return res.status(201).json({
+                            message: "User created successfully",
+                            user: {
+                                id: this.lastID,
+                                email,
+                                role,
+                            },
+                        });
                     }
-
-                    return res.status(201).json({
-                        message: "User created successfully",
-                        user: {
-                            id: this.lastID,
-                            email,
-                            role,
-                        },
-                    });
-                }
-            );
-        } catch (hashError) {
-            return next(new AppError("Password hashing failed", 500));
+                );
+            } catch (hashError) {
+                return next(new AppError("Password hashing failed", 500));
+            }
         }
-    });
+    );
+}
+
+function changePassword(req, res, next) {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    db.get(
+        `SELECT id, password FROM users WHERE id = ?`,
+        [userId],
+        async (selectError, user) => {
+            if (selectError) {
+                return next(new AppError("Database error", 500));
+            }
+
+            if (!user) {
+                return next(new AppError("User not found", 404));
+            }
+
+            try {
+                const isCurrentPasswordValid = await bcrypt.compare(
+                    currentPassword,
+                    user.password
+                );
+
+                if (!isCurrentPasswordValid) {
+                    return next(new AppError("Current password is incorrect", 401));
+                }
+
+                const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+                db.run(
+                    `UPDATE users SET password = ? WHERE id = ?`,
+                    [hashedNewPassword, userId],
+                    function (updateError) {
+                        if (updateError) {
+                            return next(new AppError("Database error", 500));
+                        }
+
+                        if (this.changes === 0) {
+                            return next(new AppError("User not found", 404));
+                        }
+
+                        return res.json({
+                            message: "Password changed successfully",
+                        });
+                    }
+                );
+            } catch (hashError) {
+                return next(new AppError("Password update failed", 500));
+            }
+        }
+    );
 }
 
 function logout(req, res) {
@@ -102,5 +158,6 @@ function logout(req, res) {
 module.exports = {
     login,
     createUser,
+    changePassword,
     logout,
 };
