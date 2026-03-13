@@ -28,6 +28,19 @@ function initDb() {
             )
         `);
 
+        db.run(`
+            CREATE TABLE IF NOT EXISTS audit_logs (
+                                                      id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                      action TEXT NOT NULL,
+                                                      entityType TEXT NOT NULL,
+                                                      entityId INTEGER,
+                                                      performedBy INTEGER,
+                                                      performedByRole TEXT,
+                                                      details TEXT,
+                                                      createdAt TEXT NOT NULL
+            )
+        `);
+
         db.get(`SELECT COUNT(*) AS count FROM users`, async (error, row) => {
             if (error) {
                 console.error("Users seed check error:", error.message);

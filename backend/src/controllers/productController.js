@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const AppError = require("../utils/AppError");
+const { writeAuditLog } = require("../utils/auditLogger");
 
 function getAllProducts(req, res, next) {
     const page = Number(req.query.page) || 1;
@@ -73,6 +74,20 @@ function createProduct(req, res, next) {
                 return next(new AppError("Database error", 500));
             }
 
+            writeAuditLog({
+                action: "PRODUCT_CREATED",
+                entityType: "product",
+                entityId: this.lastID,
+                performedBy: req.user.id,
+                performedByRole: req.user.role,
+                details: {
+                    name,
+                    price,
+                    category,
+                    stock,
+                },
+            });
+
             return res.status(201).json({
                 message: "Product created successfully",
                 id: this.lastID,
@@ -103,6 +118,20 @@ function updateProduct(req, res, next) {
                 return next(new AppError("Product not found", 404));
             }
 
+            writeAuditLog({
+                action: "PRODUCT_UPDATED",
+                entityType: "product",
+                entityId: Number(id),
+                performedBy: req.user.id,
+                performedByRole: req.user.role,
+                details: {
+                    name,
+                    price,
+                    category,
+                    stock,
+                },
+            });
+
             return res.json({
                 message: "Product updated successfully",
             });
@@ -113,17 +142,38 @@ function updateProduct(req, res, next) {
 function deleteProduct(req, res, next) {
     const { id } = req.params;
 
-    db.run(`DELETE FROM products WHERE id = ?`, [id], function (error) {
-        if (error) {
+    db.get(`SELECT id, name FROM products WHERE id = ?`, [id], (selectError, product) => {
+        if (selectError) {
             return next(new AppError("Database error", 500));
         }
 
-        if (this.changes === 0) {
+        if (!product) {
             return next(new AppError("Product not found", 404));
         }
 
-        return res.json({
-            message: "Product deleted successfully",
+        db.run(`DELETE FROM products WHERE id = ?`, [id], function (error) {
+            if (error) {
+                return next(new AppError("Database error", 500));
+            }
+
+            if (this.changes === 0) {
+                return next(new AppError("Product not found", 404));
+            }
+
+            writeAuditLog({
+                action: "PRODUCT_DELETED",
+                entityType: "product",
+                entityId: Number(id),
+                performedBy: req.user.id,
+                performedByRole: req.user.role,
+                details: {
+                    name: product.name,
+                },
+            });
+
+            return res.json({
+                message: "Product deleted successfully",
+            });
         });
     });
 }

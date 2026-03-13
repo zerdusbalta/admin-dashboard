@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const db = require("../config/db");
 const AppError = require("../utils/AppError");
 const { canManageRole } = require("../middleware/authMiddleware");
+const { writeAuditLog } = require("../utils/auditLogger");
 
 function login(req, res, next) {
     const { email, password } = req.body;
@@ -86,6 +87,18 @@ function createUser(req, res, next) {
                             return next(new AppError("Database error", 500));
                         }
 
+                        writeAuditLog({
+                            action: "USER_CREATED",
+                            entityType: "user",
+                            entityId: this.lastID,
+                            performedBy: req.user?.id || null,
+                            performedByRole: req.user?.role || "system",
+                            details: {
+                                email,
+                                role,
+                            },
+                        });
+
                         return res.status(201).json({
                             message: "User created successfully",
                             user: {
@@ -142,6 +155,17 @@ function changePassword(req, res, next) {
                         if (this.changes === 0) {
                             return next(new AppError("User not found", 404));
                         }
+
+                        writeAuditLog({
+                            action: "PASSWORD_CHANGED",
+                            entityType: "user",
+                            entityId: userId,
+                            performedBy: req.user.id,
+                            performedByRole: req.user.role,
+                            details: {
+                                changedBySelf: true,
+                            },
+                        });
 
                         return res.json({
                             message: "Password changed successfully",
@@ -229,6 +253,18 @@ function updateUserRole(req, res, next) {
                         return next(new AppError("User not found", 404));
                     }
 
+                    writeAuditLog({
+                        action: "USER_ROLE_UPDATED",
+                        entityType: "user",
+                        entityId: userIdToUpdate,
+                        performedBy: req.user.id,
+                        performedByRole: req.user.role,
+                        details: {
+                            previousRole: targetUser.role,
+                            newRole: role,
+                        },
+                    });
+
                     return res.json({
                         message: "User role updated successfully",
                     });
@@ -248,7 +284,7 @@ function deleteUser(req, res, next) {
     }
 
     db.get(
-        `SELECT id, role FROM users WHERE id = ?`,
+        `SELECT id, email, role FROM users WHERE id = ?`,
         [userIdToDelete],
         (selectError, targetUser) => {
             if (selectError) {
@@ -275,6 +311,18 @@ function deleteUser(req, res, next) {
                         return next(new AppError("User not found", 404));
                     }
 
+                    writeAuditLog({
+                        action: "USER_DELETED",
+                        entityType: "user",
+                        entityId: userIdToDelete,
+                        performedBy: req.user.id,
+                        performedByRole: req.user.role,
+                        details: {
+                            email: targetUser.email,
+                            deletedRole: targetUser.role,
+                        },
+                    });
+
                     return res.json({
                         message: "User deleted successfully",
                     });
@@ -282,6 +330,70 @@ function deleteUser(req, res, next) {
             );
         }
     );
+}
+
+function getAuditLogs(req, res, next) {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const isEditor = req.user.role === "editor";
+
+    const countQuery = isEditor
+        ? `SELECT COUNT(*) AS total FROM audit_logs WHERE performedByRole = ?`
+        : `SELECT COUNT(*) AS total FROM audit_logs`;
+
+    const countParams = isEditor ? ["staff"] : [];
+
+    db.get(countQuery, countParams, (countError, countRow) => {
+        if (countError) {
+            return next(new AppError("Database error", 500));
+        }
+
+        const logsQuery = isEditor
+            ? `
+                    SELECT
+                        audit_logs.*,
+                        users.email AS performedByEmail
+                    FROM audit_logs
+                             LEFT JOIN users ON users.id = audit_logs.performedBy
+                    WHERE audit_logs.performedByRole = ?
+                    ORDER BY audit_logs.id DESC
+                        LIMIT ? OFFSET ?
+            `
+            : `
+                    SELECT
+                        audit_logs.*,
+                        users.email AS performedByEmail
+                    FROM audit_logs
+                             LEFT JOIN users ON users.id = audit_logs.performedBy
+                    ORDER BY audit_logs.id DESC
+                        LIMIT ? OFFSET ?
+            `;
+
+        const logsParams = isEditor
+            ? ["staff", limit, offset]
+            : [limit, offset];
+
+        db.all(logsQuery, logsParams, (error, rows) => {
+            if (error) {
+                return next(new AppError("Database error", 500));
+            }
+
+            const parsedRows = rows.map((row) => ({
+                ...row,
+                details: row.details ? JSON.parse(row.details) : null,
+            }));
+
+            return res.json({
+                data: parsedRows,
+                page,
+                limit,
+                total: countRow.total,
+                totalPages: Math.ceil(countRow.total / limit),
+            });
+        });
+    });
 }
 
 function logout(req, res) {
@@ -297,5 +409,6 @@ module.exports = {
     getUsers,
     updateUserRole,
     deleteUser,
+    getAuditLogs,
     logout,
 };
