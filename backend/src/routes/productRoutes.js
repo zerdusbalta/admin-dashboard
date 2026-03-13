@@ -19,16 +19,16 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
-router.get("/", authorizeRoles("admin", "editor"), getAllProducts);
-router.get("/:id", authorizeRoles("admin", "editor"), validateProductId, getProductById);
-router.post("/", authorizeRoles("admin", "editor"), validateProduct, createProduct);
+router.get("/", authorizeRoles("admin", "editor", "staff"), getAllProducts);
+router.get("/:id", authorizeRoles("admin", "editor", "staff"), validateProductId, getProductById);
+router.post("/", authorizeRoles("admin", "editor", "staff"), validateProduct, createProduct);
 router.put(
     "/:id",
-    authorizeRoles("admin", "editor"),
+    authorizeRoles("admin", "editor", "staff"),
     validateProductId,
     validateProduct,
     updateProduct
 );
-router.delete("/:id", authorizeRoles("admin"), validateProductId, deleteProduct);
+router.delete("/:id", authorizeRoles("admin", "editor"), validateProductId, deleteProduct);
 
 module.exports = router;

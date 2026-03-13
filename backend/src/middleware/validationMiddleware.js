@@ -63,10 +63,10 @@ function validateCreateUser(req, res, next) {
         return sendValidationError(res, "Password must be at least 6 characters long");
     }
 
-    const allowedRoles = ["admin", "editor"];
+    const allowedRoles = ["admin", "editor", "staff"];
 
     if (!allowedRoles.includes(normalizedRole)) {
-        return sendValidationError(res, "Role must be either admin or editor");
+        return sendValidationError(res, "Role must be admin, editor, or staff");
     }
 
     req.body.email = normalizedEmail;
@@ -112,6 +112,30 @@ function validateChangePassword(req, res, next) {
 
     req.body.currentPassword = normalizedCurrentPassword;
     req.body.newPassword = normalizedNewPassword;
+
+    next();
+}
+
+function validateUpdateUserRole(req, res, next) {
+    const { role } = req.body;
+
+    if (typeof role !== "string") {
+        return sendValidationError(res, "Role must be a string");
+    }
+
+    const normalizedRole = role.trim().toLowerCase();
+
+    if (!normalizedRole) {
+        return sendValidationError(res, "Role is required");
+    }
+
+    const allowedRoles = ["admin", "editor", "staff"];
+
+    if (!allowedRoles.includes(normalizedRole)) {
+        return sendValidationError(res, "Role must be admin, editor, or staff");
+    }
+
+    req.body.role = normalizedRole;
 
     next();
 }
@@ -169,6 +193,7 @@ module.exports = {
     validateLogin,
     validateCreateUser,
     validateChangePassword,
+    validateUpdateUserRole,
     validateProduct,
     validateProductId,
 };

@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../config/db");
 const AppError = require("../utils/AppError");
+const { canManageRole } = require("../middleware/authMiddleware");
 
 function login(req, res, next) {
     const { email, password } = req.body;
@@ -55,6 +56,11 @@ function login(req, res, next) {
 
 function createUser(req, res, next) {
     const { email, password, role } = req.body;
+    const actorRole = req.user?.role || "admin";
+
+    if (!canManageRole(actorRole, role)) {
+        return next(new AppError("You do not have permission to assign this role", 403));
+    }
 
     db.get(
         `SELECT id FROM users WHERE email = ?`,
@@ -150,17 +156,84 @@ function changePassword(req, res, next) {
 }
 
 function getUsers(req, res, next) {
-    db.all(
-        `SELECT id, email, role, createdAt FROM users ORDER BY id ASC`,
-        [],
-        (error, rows) => {
-            if (error) {
+    if (req.user.role === "admin") {
+        return db.all(
+            `SELECT id, email, role, createdAt FROM users ORDER BY id ASC`,
+            [],
+            (error, rows) => {
+                if (error) {
+                    return next(new AppError("Database error", 500));
+                }
+
+                return res.json({
+                    data: rows,
+                });
+            }
+        );
+    }
+
+    if (req.user.role === "editor") {
+        return db.all(
+            `SELECT id, email, role, createdAt FROM users WHERE role = ? ORDER BY id ASC`,
+            ["staff"],
+            (error, rows) => {
+                if (error) {
+                    return next(new AppError("Database error", 500));
+                }
+
+                return res.json({
+                    data: rows,
+                });
+            }
+        );
+    }
+
+    return next(new AppError("You do not have permission to perform this action", 403));
+}
+
+function updateUserRole(req, res, next) {
+    const userIdToUpdate = Number(req.params.id);
+    const currentUserId = Number(req.user.id);
+    const actorRole = req.user.role;
+    const { role } = req.body;
+
+    if (userIdToUpdate === currentUserId) {
+        return next(new AppError("You cannot change your own role", 400));
+    }
+
+    db.get(
+        `SELECT id, role FROM users WHERE id = ?`,
+        [userIdToUpdate],
+        (selectError, targetUser) => {
+            if (selectError) {
                 return next(new AppError("Database error", 500));
             }
 
-            return res.json({
-                data: rows,
-            });
+            if (!targetUser) {
+                return next(new AppError("User not found", 404));
+            }
+
+            if (!canManageRole(actorRole, targetUser.role) || !canManageRole(actorRole, role)) {
+                return next(new AppError("You do not have permission to change this role", 403));
+            }
+
+            db.run(
+                `UPDATE users SET role = ? WHERE id = ?`,
+                [role, userIdToUpdate],
+                function (error) {
+                    if (error) {
+                        return next(new AppError("Database error", 500));
+                    }
+
+                    if (this.changes === 0) {
+                        return next(new AppError("User not found", 404));
+                    }
+
+                    return res.json({
+                        message: "User role updated successfully",
+                    });
+                }
+            );
         }
     );
 }
@@ -168,26 +241,45 @@ function getUsers(req, res, next) {
 function deleteUser(req, res, next) {
     const userIdToDelete = Number(req.params.id);
     const currentUserId = Number(req.user.id);
+    const actorRole = req.user.role;
 
     if (userIdToDelete === currentUserId) {
         return next(new AppError("You cannot delete your own account", 400));
     }
 
-    db.run(
-        `DELETE FROM users WHERE id = ?`,
+    db.get(
+        `SELECT id, role FROM users WHERE id = ?`,
         [userIdToDelete],
-        function (error) {
-            if (error) {
+        (selectError, targetUser) => {
+            if (selectError) {
                 return next(new AppError("Database error", 500));
             }
 
-            if (this.changes === 0) {
+            if (!targetUser) {
                 return next(new AppError("User not found", 404));
             }
 
-            return res.json({
-                message: "User deleted successfully",
-            });
+            if (!canManageRole(actorRole, targetUser.role)) {
+                return next(new AppError("You do not have permission to delete this user", 403));
+            }
+
+            db.run(
+                `DELETE FROM users WHERE id = ?`,
+                [userIdToDelete],
+                function (error) {
+                    if (error) {
+                        return next(new AppError("Database error", 500));
+                    }
+
+                    if (this.changes === 0) {
+                        return next(new AppError("User not found", 404));
+                    }
+
+                    return res.json({
+                        message: "User deleted successfully",
+                    });
+                }
+            );
         }
     );
 }
@@ -203,6 +295,7 @@ module.exports = {
     createUser,
     changePassword,
     getUsers,
+    updateUserRole,
     deleteUser,
     logout,
 };

@@ -1,6 +1,12 @@
 const jwt = require("jsonwebtoken");
 const AppError = require("../utils/AppError");
 
+const roleRank = {
+    staff: 1,
+    editor: 2,
+    admin: 3,
+};
+
 function authenticateToken(req, res, next) {
     const authHeader = req.headers.authorization;
 
@@ -28,14 +34,30 @@ function authorizeRoles(...allowedRoles) {
         }
 
         if (!allowedRoles.includes(req.user.role)) {
-            return next(new AppError("You do not have permission to perform this action", 403));
+            return next(
+                new AppError("You do not have permission to perform this action", 403)
+            );
         }
 
         next();
     };
 }
 
+function canManageRole(actorRole, targetRole) {
+    if (actorRole === "admin") {
+        return ["editor", "staff"].includes(targetRole);
+    }
+
+    if (actorRole === "editor") {
+        return targetRole === "staff";
+    }
+
+    return false;
+}
+
 module.exports = {
     authenticateToken,
     authorizeRoles,
+    roleRank,
+    canManageRole,
 };
