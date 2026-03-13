@@ -6,7 +6,10 @@ const {
     updateProduct,
     deleteProduct,
 } = require("../controllers/productController");
-const authenticateToken = require("../middleware/authMiddleware");
+const {
+    authenticateToken,
+    authorizeRoles,
+} = require("../middleware/authMiddleware");
 const {
     validateProduct,
     validateProductId,
@@ -16,10 +19,16 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
-router.get("/", getAllProducts);
-router.get("/:id", validateProductId, getProductById);
-router.post("/", validateProduct, createProduct);
-router.put("/:id", validateProductId, validateProduct, updateProduct);
-router.delete("/:id", validateProductId, deleteProduct);
+router.get("/", authorizeRoles("admin", "editor"), getAllProducts);
+router.get("/:id", authorizeRoles("admin", "editor"), validateProductId, getProductById);
+router.post("/", authorizeRoles("admin", "editor"), validateProduct, createProduct);
+router.put(
+    "/:id",
+    authorizeRoles("admin", "editor"),
+    validateProductId,
+    validateProduct,
+    updateProduct
+);
+router.delete("/:id", authorizeRoles("admin"), validateProductId, deleteProduct);
 
 module.exports = router;

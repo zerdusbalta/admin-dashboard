@@ -10,7 +10,7 @@ const {
     validateCreateUser,
     validateChangePassword,
 } = require("../middleware/validationMiddleware");
-const authenticateToken = require("../middleware/authMiddleware");
+const { authenticateToken } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
