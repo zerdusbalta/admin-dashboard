@@ -3,6 +3,8 @@ const {
     login,
     createUser,
     changePassword,
+    getUsers,
+    deleteUser,
     logout,
 } = require("../controllers/authController");
 const {
@@ -10,7 +12,10 @@ const {
     validateCreateUser,
     validateChangePassword,
 } = require("../middleware/validationMiddleware");
-const { authenticateToken } = require("../middleware/authMiddleware");
+const {
+    authenticateToken,
+    authorizeRoles,
+} = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -22,6 +27,15 @@ router.put(
     validateChangePassword,
     changePassword
 );
+
+router.get("/users", authenticateToken, authorizeRoles("admin"), getUsers);
+router.delete(
+    "/users/:id",
+    authenticateToken,
+    authorizeRoles("admin"),
+    deleteUser
+);
+
 router.post("/logout", logout);
 
 module.exports = router;

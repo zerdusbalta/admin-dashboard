@@ -149,6 +149,49 @@ function changePassword(req, res, next) {
     );
 }
 
+function getUsers(req, res, next) {
+    db.all(
+        `SELECT id, email, role, createdAt FROM users ORDER BY id ASC`,
+        [],
+        (error, rows) => {
+            if (error) {
+                return next(new AppError("Database error", 500));
+            }
+
+            return res.json({
+                data: rows,
+            });
+        }
+    );
+}
+
+function deleteUser(req, res, next) {
+    const userIdToDelete = Number(req.params.id);
+    const currentUserId = Number(req.user.id);
+
+    if (userIdToDelete === currentUserId) {
+        return next(new AppError("You cannot delete your own account", 400));
+    }
+
+    db.run(
+        `DELETE FROM users WHERE id = ?`,
+        [userIdToDelete],
+        function (error) {
+            if (error) {
+                return next(new AppError("Database error", 500));
+            }
+
+            if (this.changes === 0) {
+                return next(new AppError("User not found", 404));
+            }
+
+            return res.json({
+                message: "User deleted successfully",
+            });
+        }
+    );
+}
+
 function logout(req, res) {
     return res.json({
         message: "Logout successful",
@@ -159,5 +202,7 @@ module.exports = {
     login,
     createUser,
     changePassword,
+    getUsers,
+    deleteUser,
     logout,
 };
