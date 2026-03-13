@@ -22,7 +22,9 @@ function initDb() {
                                                     category TEXT,
                                                     stock INTEGER DEFAULT 0,
                                                     createdAt TEXT NOT NULL,
-                                                    updatedAt TEXT NOT NULL
+                                                    updatedAt TEXT NOT NULL,
+                                                    createdBy INTEGER NOT NULL,
+                                                    updatedBy INTEGER NOT NULL
             )
         `);
 
@@ -60,19 +62,30 @@ function initDb() {
 
             if (row.count === 0) {
                 const now = new Date().toISOString();
+                const adminUserId = 1;
 
                 const statement = db.prepare(`
-                    INSERT INTO products (name, description, price, category, stock, createdAt, updatedAt)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO products (
+                        name,
+                        description,
+                        price,
+                        category,
+                        stock,
+                        createdAt,
+                        updatedAt,
+                        createdBy,
+                        updatedBy
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `);
 
                 const products = [
-                    ["Keyboard", "Mechanical keyboard", 99.99, "Electronics", 12, now, now],
-                    ["Mouse", "Wireless mouse", 49.99, "Electronics", 20, now, now],
-                    ["Monitor", "24 inch monitor", 199.99, "Electronics", 8, now, now],
-                    ["Desk Lamp", "LED desk lamp", 29.99, "Home", 15, now, now],
-                    ["Notebook", "A5 notebook", 9.99, "Office", 50, now, now],
-                    ["Chair", "Ergonomic office chair", 249.99, "Furniture", 5, now, now]
+                    ["Keyboard", "Mechanical keyboard", 99.99, "Electronics", 12, now, now, adminUserId, adminUserId],
+                    ["Mouse", "Wireless mouse", 49.99, "Electronics", 20, now, now, adminUserId, adminUserId],
+                    ["Monitor", "24 inch monitor", 199.99, "Electronics", 8, now, now, adminUserId, adminUserId],
+                    ["Desk Lamp", "LED desk lamp", 29.99, "Home", 15, now, now, adminUserId, adminUserId],
+                    ["Notebook", "A5 notebook", 9.99, "Office", 50, now, now, adminUserId, adminUserId],
+                    ["Chair", "Ergonomic office chair", 249.99, "Furniture", 5, now, now, adminUserId, adminUserId]
                 ];
 
                 for (const product of products) {

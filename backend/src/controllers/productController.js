@@ -49,14 +49,25 @@ function getProductById(req, res, next) {
 
 function createProduct(req, res, next) {
     const { name, description, price, category, stock } = req.body;
+    const userId = Number(req.user.id);
     const now = new Date().toISOString();
 
     db.run(
         `
-            INSERT INTO products (name, description, price, category, stock, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO products (
+                name,
+                description,
+                price,
+                category,
+                stock,
+                createdAt,
+                updatedAt,
+                createdBy,
+                updatedBy
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
-        [name, description, price, category, stock, now, now],
+        [name, description, price, category, stock, now, now, userId, userId],
         function (error) {
             if (error) {
                 return next(new AppError("Database error", 500));
@@ -73,15 +84,16 @@ function createProduct(req, res, next) {
 function updateProduct(req, res, next) {
     const { id } = req.params;
     const { name, description, price, category, stock } = req.body;
+    const userId = Number(req.user.id);
     const now = new Date().toISOString();
 
     db.run(
         `
             UPDATE products
-            SET name = ?, description = ?, price = ?, category = ?, stock = ?, updatedAt = ?
+            SET name = ?, description = ?, price = ?, category = ?, stock = ?, updatedAt = ?, updatedBy = ?
             WHERE id = ?
         `,
-        [name, description, price, category, stock, now, id],
+        [name, description, price, category, stock, now, userId, id],
         function (error) {
             if (error) {
                 return next(new AppError("Database error", 500));
