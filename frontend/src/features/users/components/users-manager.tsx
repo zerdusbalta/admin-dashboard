@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import UserForm from "./user-form";
 import UsersTable from "./users-table";
 import { deleteUser } from "../services/delete-user";
+import { transferPrimaryAdmin } from "../services/transfer-primary-admin";
 import { updateUserRole } from "../services/update-user-role";
 import type { User } from "../types/user.types";
 
@@ -54,6 +55,32 @@ export default function UsersManager({ users }: UsersManagerProps) {
 
             setActionError(message);
             router.refresh();
+        }
+    }
+
+    async function handleTransferPrimaryAdmin(user: User) {
+        const confirmed = window.confirm(
+            `Transfer primary admin access to "${user.email}"?`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        setActionError("");
+        setActionSuccess("");
+
+        try {
+            await transferPrimaryAdmin(user.id);
+            setActionSuccess("Primary admin access transferred successfully.");
+            router.refresh();
+        } catch (error) {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to transfer primary admin access.";
+
+            setActionError(message);
         }
     }
 
@@ -114,6 +141,7 @@ export default function UsersManager({ users }: UsersManagerProps) {
                     users={users}
                     onRoleChangeAction={handleRoleChange}
                     onDeleteAction={handleDelete}
+                    onTransferPrimaryAdminAction={handleTransferPrimaryAdmin}
                 />
             </div>
         </div>

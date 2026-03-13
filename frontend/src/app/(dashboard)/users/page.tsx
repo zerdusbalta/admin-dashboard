@@ -27,7 +27,7 @@ export default async function UsersPage() {
                 </div>
             ) : (
                 <>
-                    <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-4">
                         <div className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
                             <div className="flex flex-col items-center text-center">
                                 <p className="text-sm font-medium text-slate-500">Total Users</p>
@@ -60,6 +60,21 @@ export default async function UsersPage() {
                                             (user) =>
                                                 user.role === "editor" ||
                                                 user.role === "staff"
+                                        ).length
+                                    }
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
+                            <div className="flex flex-col items-center text-center">
+                                <p className="text-sm font-medium text-slate-500">
+                                    Primary Admins
+                                </p>
+                                <p className="mt-3 text-3xl font-bold text-slate-900">
+                                    {
+                                        usersResponse.data.filter(
+                                            (user) => user.isPrimaryAdmin
                                         ).length
                                     }
                                 </p>

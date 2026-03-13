@@ -6,6 +6,7 @@ type UsersTableProps = {
     users: User[];
     onRoleChangeAction: (user: User, role: "admin" | "editor" | "staff") => void;
     onDeleteAction: (user: User) => void;
+    onTransferPrimaryAdminAction: (user: User) => void;
 };
 
 function formatDate(value: string) {
@@ -16,6 +17,7 @@ export default function UsersTable({
                                        users,
                                        onRoleChangeAction,
                                        onDeleteAction,
+                                       onTransferPrimaryAdminAction,
                                    }: UsersTableProps) {
     if (users.length === 0) {
         return (
@@ -53,7 +55,14 @@ export default function UsersTable({
                                 <p className="text-sm font-semibold text-slate-900">
                                     {user.email}
                                 </p>
-                                <p className="mt-1 text-xs text-slate-400">ID: {user.id}</p>
+                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                    <p className="text-xs text-slate-400">ID: {user.id}</p>
+                                    {user.isPrimaryAdmin ? (
+                                        <span className="inline-flex rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700">
+                                                Primary Admin
+                                            </span>
+                                    ) : null}
+                                </div>
                             </td>
 
                             <td className="px-6 py-4 align-top">
@@ -65,7 +74,8 @@ export default function UsersTable({
                                             event.target.value as "admin" | "editor" | "staff"
                                         )
                                     }
-                                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+                                    disabled={user.isPrimaryAdmin}
+                                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     <option value="staff">Staff</option>
                                     <option value="editor">Editor</option>
@@ -78,13 +88,26 @@ export default function UsersTable({
                             </td>
 
                             <td className="whitespace-nowrap px-6 py-4 align-top">
-                                <button
-                                    type="button"
-                                    onClick={() => onDeleteAction(user)}
-                                    className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-200 bg-white px-3.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
-                                >
-                                    Delete
-                                </button>
+                                <div className="flex flex-wrap gap-2">
+                                    {!user.isPrimaryAdmin && user.role === "admin" ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => onTransferPrimaryAdminAction(user)}
+                                            className="inline-flex h-9 items-center justify-center rounded-lg border border-indigo-200 bg-white px-3.5 text-sm font-medium text-indigo-700 transition hover:bg-indigo-50"
+                                        >
+                                            Make Primary
+                                        </button>
+                                    ) : null}
+
+                                    <button
+                                        type="button"
+                                        onClick={() => onDeleteAction(user)}
+                                        disabled={user.isPrimaryAdmin}
+                                        className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-200 bg-white px-3.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     ))}
