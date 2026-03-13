@@ -24,7 +24,7 @@ router.get("/:id", authorizeRoles("admin", "editor", "staff"), validateProductId
 router.post("/", authorizeRoles("admin", "editor", "staff"), validateProduct, createProduct);
 router.put(
     "/:id",
-    authorizeRoles("admin", "editor", "staff"),
+    authorizeRoles("admin", "editor"),
     validateProductId,
     validateProduct,
     updateProduct

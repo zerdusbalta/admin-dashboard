@@ -6,6 +6,7 @@ const {
     getUsers,
     updateUserRole,
     deleteUser,
+    transferPrimaryAdmin,
     getAuditLogs,
     logout,
 } = require("../controllers/authController");
@@ -47,6 +48,13 @@ router.put(
     authorizeRoles("admin", "editor"),
     validateUpdateUserRole,
     updateUserRole
+);
+
+router.put(
+    "/users/:id/transfer-primary-admin",
+    authenticateToken,
+    authorizeRoles("admin"),
+    transferPrimaryAdmin
 );
 
 router.delete(

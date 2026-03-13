@@ -360,6 +360,84 @@ function deleteUser(req, res, next) {
     );
 }
 
+function transferPrimaryAdmin(req, res, next) {
+    const targetUserId = Number(req.params.id);
+    const currentUserId = Number(req.user.id);
+
+    if (req.user.role !== "admin" || !req.user.isPrimaryAdmin) {
+        return next(new AppError("Only the primary admin can transfer primary admin access", 403));
+    }
+
+    if (targetUserId === currentUserId) {
+        return next(new AppError("You already have primary admin access", 400));
+    }
+
+    db.get(
+        `SELECT id, email, role, isPrimaryAdmin FROM users WHERE id = ?`,
+        [targetUserId],
+        (selectError, targetUser) => {
+            if (selectError) {
+                return next(new AppError("Database error", 500));
+            }
+
+            if (!targetUser) {
+                return next(new AppError("User not found", 404));
+            }
+
+            if (targetUser.role !== "admin") {
+                return next(new AppError("Primary admin access can only be transferred to an admin user", 400));
+            }
+
+            if (targetUser.isPrimaryAdmin) {
+                return next(new AppError("This user is already the primary admin", 400));
+            }
+
+            db.serialize(() => {
+                db.run(
+                    `UPDATE users SET isPrimaryAdmin = 0 WHERE id = ?`,
+                    [currentUserId],
+                    (removeError) => {
+                        if (removeError) {
+                            return next(new AppError("Database error", 500));
+                        }
+
+                        db.run(
+                            `UPDATE users SET isPrimaryAdmin = 1 WHERE id = ?`,
+                            [targetUserId],
+                            function (assignError) {
+                                if (assignError) {
+                                    return next(new AppError("Database error", 500));
+                                }
+
+                                if (this.changes === 0) {
+                                    return next(new AppError("User not found", 404));
+                                }
+
+                                writeAuditLog({
+                                    action: "PRIMARY_ADMIN_TRANSFERRED",
+                                    entityType: "user",
+                                    entityId: targetUserId,
+                                    performedBy: req.user.id,
+                                    performedByRole: req.user.role,
+                                    details: {
+                                        previousPrimaryAdminId: currentUserId,
+                                        newPrimaryAdminId: targetUserId,
+                                        newPrimaryAdminEmail: targetUser.email,
+                                    },
+                                });
+
+                                return res.json({
+                                    message: "Primary admin access transferred successfully",
+                                });
+                            }
+                        );
+                    }
+                );
+            });
+        }
+    );
+}
+
 function getAuditLogs(req, res, next) {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
@@ -380,23 +458,23 @@ function getAuditLogs(req, res, next) {
 
         const logsQuery = isEditor
             ? `
-                    SELECT
-                        audit_logs.*,
-                        users.email AS performedByEmail
-                    FROM audit_logs
-                             LEFT JOIN users ON users.id = audit_logs.performedBy
-                    WHERE audit_logs.performedByRole = ?
-                    ORDER BY audit_logs.id DESC
-                        LIMIT ? OFFSET ?
+                SELECT
+                    audit_logs.*,
+                    users.email AS performedByEmail
+                FROM audit_logs
+                LEFT JOIN users ON users.id = audit_logs.performedBy
+                WHERE audit_logs.performedByRole = ?
+                ORDER BY audit_logs.id DESC
+                LIMIT ? OFFSET ?
             `
             : `
-                    SELECT
-                        audit_logs.*,
-                        users.email AS performedByEmail
-                    FROM audit_logs
-                             LEFT JOIN users ON users.id = audit_logs.performedBy
-                    ORDER BY audit_logs.id DESC
-                        LIMIT ? OFFSET ?
+                SELECT
+                    audit_logs.*,
+                    users.email AS performedByEmail
+                FROM audit_logs
+                LEFT JOIN users ON users.id = audit_logs.performedBy
+                ORDER BY audit_logs.id DESC
+                LIMIT ? OFFSET ?
             `;
 
         const logsParams = isEditor
@@ -437,6 +515,7 @@ module.exports = {
     getUsers,
     updateUserRole,
     deleteUser,
+    transferPrimaryAdmin,
     getAuditLogs,
     logout,
 };
