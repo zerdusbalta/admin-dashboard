@@ -201,7 +201,7 @@ export default function ProductForm({
                 <button
                     type="submit"
                     disabled={loading}
-                    className="inline-flex h-10 min-w-[132px] items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-10 min-w-33 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     {loading
                         ? isEditMode

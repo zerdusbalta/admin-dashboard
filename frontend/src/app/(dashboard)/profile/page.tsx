@@ -1,6 +1,6 @@
-import SectionHeader from "../../../components/shared/section-header";
-import { mockProfile } from "../../../data/mock-profile";
-import UserAvatar from "../../../components/shared/user-avatar";
+import SectionHeader from "@/components/shared/section-header";
+import { mockProfile } from "@/data/mock-profile";
+import UserAvatar from "@/components/shared/user-avatar";
 
 export default function ProfilePage() {
     return (
