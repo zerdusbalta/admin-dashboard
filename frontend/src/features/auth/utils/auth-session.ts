@@ -21,6 +21,10 @@ export const PAGE_TITLES: Record<string, { title: string; description: string }>
         title: "Profile",
         description: "View your account information and role details",
     },
+    "/audit-logs": {
+        title: "Audit Logs",
+        description: "Review recent activity across products and users",
+    },
 };
 
 export function setAuthToken(token: string) {
