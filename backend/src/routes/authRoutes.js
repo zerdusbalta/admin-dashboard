@@ -40,7 +40,7 @@ router.put(
     changePassword
 );
 
-router.get("/users", authenticateToken, authorizeRoles("admin", "editor"), getUsers);
+router.get("/users", authenticateToken, authorizeRoles("admin", "editor", "staff"), getUsers);
 
 router.put(
     "/users/:id/role",
@@ -67,7 +67,7 @@ router.delete(
 router.get(
     "/audit-logs",
     authenticateToken,
-    authorizeRoles("admin", "editor"),
+    authorizeRoles("admin", "editor", "staff"),
     getAuditLogs
 );
 

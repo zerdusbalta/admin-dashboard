@@ -190,7 +190,7 @@ function changePassword(req, res, next) {
 function getUsers(req, res, next) {
     if (req.user.role === "admin") {
         return db.all(
-            `SELECT id, email, role, isPrimaryAdmin, createdAt FROM users ORDER BY id ASC`,
+            `SELECT id, email, role, isPrimaryAdmin, createdAt FROM users ORDER BY id DESC `,
             [],
             (error, rows) => {
                 if (error) {
@@ -211,6 +211,24 @@ function getUsers(req, res, next) {
         return db.all(
             `SELECT id, email, role, isPrimaryAdmin, createdAt FROM users WHERE role = ? ORDER BY id ASC`,
             ["staff"],
+            (error, rows) => {
+                if (error) {
+                    return next(new AppError("Database error", 500));
+                }
+
+                return res.json({
+                    data: rows.map((row) => ({
+                        ...row,
+                        isPrimaryAdmin: Boolean(row.isPrimaryAdmin),
+                    })),
+                });
+            }
+        );
+    }
+    if (req.user.role === "staff") {
+        return db.all(
+            `SELECT id, email, role, isPrimaryAdmin, createdAt FROM users ORDER BY id DESC`,
+            [],
             (error, rows) => {
                 if (error) {
                     return next(new AppError("Database error", 500));
@@ -444,42 +462,62 @@ function getAuditLogs(req, res, next) {
     const offset = (page - 1) * limit;
 
     const isEditor = req.user.role === "editor";
+    const isStaff = req.user.role === "staff";
 
-    const countQuery = isEditor
-        ? `SELECT COUNT(*) AS total FROM audit_logs WHERE performedByRole = ?`
-        : `SELECT COUNT(*) AS total FROM audit_logs`;
+    const countQuery = isStaff
+        ? `SELECT COUNT(*) AS total FROM audit_logs WHERE performedBy = ?`
+        : isEditor
+            ? `SELECT COUNT(*) AS total FROM audit_logs WHERE performedByRole = ?`
+            : `SELECT COUNT(*) AS total FROM audit_logs`;
 
-    const countParams = isEditor ? ["staff"] : [];
+    const countParams = isStaff
+        ? [req.user.id]
+        : isEditor
+            ? ["staff"]
+            : [];
 
     db.get(countQuery, countParams, (countError, countRow) => {
         if (countError) {
             return next(new AppError("Database error", 500));
         }
 
-        const logsQuery = isEditor
+        const logsQuery = isStaff
             ? `
-                SELECT
-                    audit_logs.*,
-                    users.email AS performedByEmail
-                FROM audit_logs
-                LEFT JOIN users ON users.id = audit_logs.performedBy
-                WHERE audit_logs.performedByRole = ?
-                ORDER BY audit_logs.id DESC
-                LIMIT ? OFFSET ?
+                    SELECT
+                        audit_logs.*,
+                        users.email AS performedByEmail
+                    FROM audit_logs
+                             LEFT JOIN users ON users.id = audit_logs.performedBy
+                    WHERE audit_logs.performedBy = ?
+                    ORDER BY audit_logs.id DESC
+                        LIMIT ? OFFSET ?
             `
-            : `
-                SELECT
-                    audit_logs.*,
-                    users.email AS performedByEmail
-                FROM audit_logs
-                LEFT JOIN users ON users.id = audit_logs.performedBy
-                ORDER BY audit_logs.id DESC
-                LIMIT ? OFFSET ?
-            `;
+            : isEditor
+                ? `
+            SELECT
+                audit_logs.*,
+                users.email AS performedByEmail
+            FROM audit_logs
+            LEFT JOIN users ON users.id = audit_logs.performedBy
+            WHERE audit_logs.performedByRole = ?
+            ORDER BY audit_logs.id DESC
+            LIMIT ? OFFSET ?
+        `
+                : `
+            SELECT
+                audit_logs.*,
+                users.email AS performedByEmail
+            FROM audit_logs
+            LEFT JOIN users ON users.id = audit_logs.performedBy
+            ORDER BY audit_logs.id DESC
+            LIMIT ? OFFSET ?
+        `;
 
-        const logsParams = isEditor
-            ? ["staff", limit, offset]
-            : [limit, offset];
+        const logsParams = isStaff
+            ? [req.user.id, limit, offset]
+            : isEditor
+                ? ["staff", limit, offset]
+                : [limit, offset];
 
         db.all(logsQuery, logsParams, (error, rows) => {
             if (error) {
