@@ -1,15 +1,18 @@
 "use client";
 
+import type { AuthUser } from "@/features/auth/utils/auth-session";
 import type { Product } from "../types/product.types";
 
 type ProductsTableProps = {
     products: Product[];
+    currentUser: AuthUser | null;
     onEditAction: (product: Product) => void;
     onDeleteAction: (product: Product) => void;
 };
 
 export default function ProductsTable({
                                           products,
+                                          currentUser,
                                           onEditAction,
                                           onDeleteAction,
                                       }: ProductsTableProps) {
@@ -20,6 +23,8 @@ export default function ProductsTable({
             </div>
         );
     }
+
+    const isStaff = currentUser?.role === "staff";
 
     return (
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -51,28 +56,24 @@ export default function ProductsTable({
                     <tbody className="divide-y divide-slate-200 bg-white">
                     {products.map((product) => (
                         <tr key={product.id} className="hover:bg-slate-50">
-                            <td className="px-6 py-4 align-top">
+                            <td className="px-6 py-4 align-middle">
                                 <p className="text-sm font-semibold text-slate-900">
                                     {product.name}
                                 </p>
                                 <p className="mt-1 text-xs text-slate-400">
                                     ID: {product.id}
                                 </p>
-                                <div className="mt-2 space-y-1 text-xs text-slate-500">
-                                    <p>Created by user #{product.createdBy}</p>
-                                    <p>Updated by user #{product.updatedBy}</p>
-                                </div>
                             </td>
 
-                            <td className="whitespace-nowrap px-6 py-4 align-top text-sm text-slate-600">
+                            <td className="whitespace-nowrap px-6 py-4 align-middle text-sm text-slate-600">
                                 {product.category || "—"}
                             </td>
 
-                            <td className="whitespace-nowrap px-6 py-4 align-top text-sm font-medium text-slate-900">
+                            <td className="whitespace-nowrap px-6 py-4 align-middle text-sm font-medium text-slate-900">
                                 ${product.price.toFixed(2)}
                             </td>
 
-                            <td className="whitespace-nowrap px-6 py-4 align-top">
+                            <td className="whitespace-nowrap px-6 py-4 align-middle">
                                     <span
                                         className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
                                             product.stock > 10
@@ -86,29 +87,33 @@ export default function ProductsTable({
                                     </span>
                             </td>
 
-                            <td className="px-6 py-4 align-top text-sm text-slate-600">
-                                <div className="max-w-[260px] truncate">
+                            <td className="px-6 py-4 align-middle text-sm text-slate-600">
+                                <div className="max-w-65 truncate">
                                     {product.description || "—"}
                                 </div>
                             </td>
 
-                            <td className="whitespace-nowrap px-6 py-4 align-top">
+                            <td className="whitespace-nowrap px-6 py-4 align-middle">
                                 <div className="flex flex-wrap gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => onEditAction(product)}
-                                        className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                                    >
-                                        Edit
-                                    </button>
+                                    {!isStaff ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => onEditAction(product)}
+                                            className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                        >
+                                            Edit
+                                        </button>
+                                    ) : null}
 
-                                    <button
-                                        type="button"
-                                        onClick={() => onDeleteAction(product)}
-                                        className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-200 bg-white px-3.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
-                                    >
-                                        Delete
-                                    </button>
+                                    {!isStaff ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => onDeleteAction(product)}
+                                            className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-200 bg-white px-3.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
+                                        >
+                                            Delete
+                                        </button>
+                                    ) : null}
                                 </div>
                             </td>
                         </tr>

@@ -7,6 +7,10 @@ import ProductForm from "./product-form";
 import ProductsTable from "./products-table";
 import { deleteProduct } from "../services/delete-product";
 import type { Product } from "../types/product.types";
+import {
+    getAuthUserFromBrowser,
+    type AuthUser,
+} from "@/features/auth/utils/auth-session";
 
 type ProductsManagerProps = {
     products: Product[];
@@ -16,6 +20,7 @@ export default function ProductsManager({
                                             products,
                                         }: ProductsManagerProps) {
     const router = useRouter();
+    const currentUser: AuthUser | null = getAuthUserFromBrowser();
 
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
@@ -107,6 +112,7 @@ export default function ProductsManager({
             <div className="pt-2">
                 <ProductsTable
                     products={products}
+                    currentUser={currentUser}
                     onEditAction={handleEdit}
                     onDeleteAction={handleDelete}
                 />

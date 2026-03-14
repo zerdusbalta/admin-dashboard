@@ -3,20 +3,27 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createUser } from "../services/create-user";
+import type { AuthUser } from "@/features/auth/utils/auth-session";
 
 type UserFormProps = {
     onCloseAction: () => void;
+    currentUser: AuthUser | null;
 };
 
-export default function UserForm({ onCloseAction }: UserFormProps) {
+export default function UserForm({onCloseAction, currentUser,}: UserFormProps) {
     const router = useRouter();
-
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState<"admin" | "editor" | "staff">("staff");
 
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const allowedRoles =
+        currentUser?.role === "admin" && currentUser?.isPrimaryAdmin
+            ? ["staff", "editor", "admin"]
+            : currentUser?.role === "admin"
+                ? ["staff", "editor"]
+                : ["staff"];
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -88,9 +95,11 @@ export default function UserForm({ onCloseAction }: UserFormProps) {
                             }
                             className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400"
                         >
-                            <option value="staff">Staff</option>
-                            <option value="editor">Editor</option>
-                            <option value="admin">Admin</option>
+                            {allowedRoles.map((allowedRole) => (
+                                <option key={allowedRole} value={allowedRole}>
+                                    {allowedRole.charAt(0).toUpperCase() + allowedRole.slice(1)}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </div>

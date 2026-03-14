@@ -8,6 +8,7 @@ import { deleteUser } from "../services/delete-user";
 import { transferPrimaryAdmin } from "../services/transfer-primary-admin";
 import { updateUserRole } from "../services/update-user-role";
 import type { User } from "../types/user.types";
+import {getAuthUserFromBrowser, type AuthUser,} from "@/features/auth/utils/auth-session";
 
 type UsersManagerProps = {
     users: User[];
@@ -15,7 +16,7 @@ type UsersManagerProps = {
 
 export default function UsersManager({ users }: UsersManagerProps) {
     const router = useRouter();
-
+    const currentUser: AuthUser | null = getAuthUserFromBrowser();
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [actionError, setActionError] = useState("");
     const [actionSuccess, setActionSuccess] = useState("");
@@ -123,8 +124,7 @@ export default function UsersManager({ users }: UsersManagerProps) {
             ) : null}
 
             <div className="flex justify-end">
-                {!showCreateForm ? (
-                    <button
+                {!showCreateForm && currentUser?.role !== "staff" ? (                    <button
                         type="button"
                         onClick={handleOpenCreate}
                         className="inline-flex h-10 items-center justify-center rounded-lg bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-800"
@@ -134,11 +134,17 @@ export default function UsersManager({ users }: UsersManagerProps) {
                 ) : null}
             </div>
 
-            {showCreateForm ? <UserForm onCloseAction={handleCloseCreate} /> : null}
+            {showCreateForm ? (
+                <UserForm
+                    onCloseAction={handleCloseCreate}
+                    currentUser={currentUser}
+                />
+            ) : null}
 
             <div className="pt-2">
                 <UsersTable
                     users={users}
+                    currentUser={currentUser}
                     onRoleChangeAction={handleRoleChange}
                     onDeleteAction={handleDelete}
                     onTransferPrimaryAdminAction={handleTransferPrimaryAdmin}

@@ -1,9 +1,11 @@
 "use client";
 
 import type { User } from "../types/user.types";
+import type { AuthUser } from "@/features/auth/utils/auth-session";
 
 type UsersTableProps = {
     users: User[];
+    currentUser: AuthUser | null;
     onRoleChangeAction: (user: User, role: "admin" | "editor" | "staff") => void;
     onDeleteAction: (user: User) => void;
     onTransferPrimaryAdminAction: (user: User) => void;
@@ -15,6 +17,7 @@ function formatDate(value: string) {
 
 export default function UsersTable({
                                        users,
+                                       currentUser,
                                        onRoleChangeAction,
                                        onDeleteAction,
                                        onTransferPrimaryAdminAction,
@@ -49,68 +52,94 @@ export default function UsersTable({
                     </thead>
 
                     <tbody className="divide-y divide-slate-200 bg-white">
-                    {users.map((user) => (
-                        <tr key={user.id} className="hover:bg-slate-50">
-                            <td className="px-6 py-4 align-top">
-                                <p className="text-sm font-semibold text-slate-900">
-                                    {user.email}
-                                </p>
-                                <div className="mt-1 flex flex-wrap items-center gap-2">
-                                    <p className="text-xs text-slate-400">ID: {user.id}</p>
-                                    {user.isPrimaryAdmin ? (
-                                        <span className="inline-flex rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700">
-                                                Primary Admin
-                                            </span>
-                                    ) : null}
-                                </div>
-                            </td>
+                    {users.map((user) => {
+                        const allowedRoles =
+                            currentUser?.role === "admin" && currentUser?.isPrimaryAdmin
+                                ? ["staff", "editor", "admin"]
+                                : currentUser?.role === "admin"
+                                    ? ["staff", "editor"]
+                                    : ["staff"];
 
-                            <td className="px-6 py-4 align-top">
-                                <select
-                                    value={user.role}
-                                    onChange={(event) =>
-                                        onRoleChangeAction(
-                                            user,
-                                            event.target.value as "admin" | "editor" | "staff"
-                                        )
-                                    }
-                                    disabled={user.isPrimaryAdmin}
-                                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    <option value="staff">Staff</option>
-                                    <option value="editor">Editor</option>
-                                    <option value="admin">Admin</option>
-                                </select>
-                            </td>
+                        const canShowMakePrimary =
+                            currentUser?.role === "admin" &&
+                            currentUser?.isPrimaryAdmin === true &&
+                            user.role === "admin" &&
+                            !user.isPrimaryAdmin;
 
-                            <td className="whitespace-nowrap px-6 py-4 align-top text-sm text-slate-600">
-                                {formatDate(user.createdAt)}
-                            </td>
+                        const canDeleteUser =
+                            !user.isPrimaryAdmin &&
+                            (
+                                currentUser?.role === "admin" ||
+                                (currentUser?.role === "editor" && user.role === "staff")
+                            );
 
-                            <td className="whitespace-nowrap px-6 py-4 align-top">
-                                <div className="flex flex-wrap gap-2">
-                                    {!user.isPrimaryAdmin && user.role === "admin" ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => onTransferPrimaryAdminAction(user)}
-                                            className="inline-flex h-9 items-center justify-center rounded-lg border border-indigo-200 bg-white px-3.5 text-sm font-medium text-indigo-700 transition hover:bg-indigo-50"
-                                        >
-                                            Make Primary
-                                        </button>
-                                    ) : null}
+                        return (
+                            <tr key={user.id} className="hover:bg-slate-50">
+                                <td className="px-6 py-4 align-top">
+                                    <p className="text-sm font-semibold text-slate-900">
+                                        {user.email}
+                                    </p>
+                                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                                        <p className="text-xs text-slate-400">ID: {user.id}</p>
+                                        {user.isPrimaryAdmin ? (
+                                            <span className="inline-flex rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700">
+                                                    Primary Admin
+                                                </span>
+                                        ) : null}
+                                    </div>
+                                </td>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => onDeleteAction(user)}
+                                <td className="px-6 py-4 align-top">
+                                    <select
+                                        value={user.role}
+                                        onChange={(event) =>
+                                            onRoleChangeAction(
+                                                user,
+                                                event.target.value as "admin" | "editor" | "staff"
+                                            )
+                                        }
                                         disabled={user.isPrimaryAdmin}
-                                        className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-200 bg-white px-3.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                        Delete
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
+                                        {allowedRoles.map((allowedRole) => (
+                                            <option key={allowedRole} value={allowedRole}>
+                                                {allowedRole.charAt(0).toUpperCase() + allowedRole.slice(1)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </td>
+
+                                <td className="whitespace-nowrap px-6 py-4 align-top text-sm text-slate-600">
+                                    {formatDate(user.createdAt)}
+                                </td>
+
+                                <td className="whitespace-nowrap px-6 py-4 align-top">
+                                    <div className="flex flex-wrap gap-2">
+                                        {canShowMakePrimary ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => onTransferPrimaryAdminAction(user)}
+                                                className="inline-flex h-9 items-center justify-center rounded-lg border border-indigo-200 bg-white px-3.5 text-sm font-medium text-indigo-700 transition hover:bg-indigo-50"
+                                            >
+                                                Make Primary
+                                            </button>
+                                        ) : null}
+
+                                        {canDeleteUser ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => onDeleteAction(user)}
+                                                disabled={user.isPrimaryAdmin}
+                                                className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-200 bg-white px-3.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                Delete
+                                            </button>
+                                        ) : null}
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
                     </tbody>
                 </table>
             </div>
