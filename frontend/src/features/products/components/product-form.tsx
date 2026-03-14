@@ -25,7 +25,6 @@ export default function ProductForm({
     const [stock, setStock] = useState("");
 
     const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
 
     const isEditMode = selectedProduct !== null;
@@ -38,7 +37,6 @@ export default function ProductForm({
             setCategory(selectedProduct.category || "");
             setStock(String(selectedProduct.stock));
             setError("");
-            setSuccess("");
             return;
         }
 
@@ -48,14 +46,12 @@ export default function ProductForm({
         setCategory("");
         setStock("");
         setError("");
-        setSuccess("");
     }, [selectedProduct]);
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
         setError("");
-        setSuccess("");
 
         if (!name.trim() || !price.trim()) {
             setError("Name and price are required.");
