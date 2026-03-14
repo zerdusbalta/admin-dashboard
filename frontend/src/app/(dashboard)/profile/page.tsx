@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import SectionHeader from "@/components/shared/section-header";
-import UserAvatar from "@/components/shared/user-avatar";
-import ChangePasswordPanel from "@/features/auth/components/change-password-panel";import {
+import ChangePasswordPanel from "@/features/auth/components/change-password-panel";
+import ProfileAvatarPanel from "@/features/auth/components/profile-avatar-panel";
+import {
     AUTH_USER_COOKIE_NAME,
     type AuthUser,
 } from "@/features/auth/utils/auth-session";
@@ -34,14 +35,16 @@ export default async function ProfilePage() {
 
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div className="border-b border-slate-200 px-6 py-5">
-                    <div className="flex items-center gap-4">
-                        <UserAvatar name={email} size="md" />
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-4">
+                            <ProfileAvatarPanel email={email} />
 
-                        <div>
-                            <h2 className="text-lg font-semibold text-slate-900">
-                                {email}
-                            </h2>
-                            <p className="text-sm text-slate-500">{role}</p>
+                            <div>
+                                <h2 className="text-lg font-semibold text-slate-900">
+                                    {email}
+                                </h2>
+                                <p className="text-sm text-slate-500">{role}</p>
+                            </div>
                         </div>
                     </div>
                 </div>

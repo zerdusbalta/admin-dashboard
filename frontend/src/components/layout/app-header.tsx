@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import UserAvatar from "@/components/shared/user-avatar";
 import {
@@ -10,10 +11,48 @@ import {
     getAuthUserFromBrowser,
 } from "@/features/auth/utils/auth-session";
 
+function getAvatarStorageKey(email: string) {
+    return `admin-dashboard-avatar:${email.toLowerCase()}`;
+}
+
+function subscribeToAvatarChanges(callback: () => void) {
+    const handleAvatarUpdated = () => callback();
+    const handleStorage = () => callback();
+
+    window.addEventListener("avatar-updated", handleAvatarUpdated);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+        window.removeEventListener("avatar-updated", handleAvatarUpdated);
+        window.removeEventListener("storage", handleStorage);
+    };
+}
+
 export default function AppHeader() {
     const pathname = usePathname();
     const router = useRouter();
-    const currentUser = getAuthUserFromBrowser();
+
+    const isClient = useSyncExternalStore(
+        () => () => {},
+        () => true,
+        () => false
+    );
+
+    const currentUser = isClient ? getAuthUserFromBrowser() : null;
+    const displayName = currentUser?.email ?? "";
+    const displayRole = currentUser?.role ?? "";
+
+    const avatarUrl = useSyncExternalStore(
+        subscribeToAvatarChanges,
+        () => {
+            if (typeof window === "undefined" || !displayName) {
+                return "";
+            }
+
+            return localStorage.getItem(getAvatarStorageKey(displayName)) || "";
+        },
+        () => ""
+    );
 
     const currentPage = PAGE_TITLES[pathname] ?? {
         title: "Dashboard",
@@ -26,8 +65,6 @@ export default function AppHeader() {
         router.push("/login");
         router.refresh();
     }
-
-    const displayName = currentUser?.email ?? "Unknown User";
 
     return (
         <header className="border-b border-slate-200 bg-white px-6 py-4">
@@ -56,13 +93,17 @@ export default function AppHeader() {
                     </button>
 
                     <div className="hidden text-right sm:block">
-                        <p className="text-sm font-medium text-slate-800">{displayName}</p>
-                        <p className="text-xs text-slate-500">
-                            {currentUser?.role ?? "Unknown role"}
+                        <p className="text-sm font-medium text-slate-800">
+                            {displayName}
                         </p>
+                        <p className="text-xs text-slate-500">{displayRole}</p>
                     </div>
 
-                    <UserAvatar name={displayName} size="sm" />
+                    <UserAvatar
+                        name={displayName || "User"}
+                        avatarUrl={avatarUrl || undefined}
+                        size="sm"
+                    />
                 </div>
             </div>
         </header>

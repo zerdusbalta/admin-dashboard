@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 type UserAvatarProps = {
     name: string;
     avatarUrl?: string;
@@ -15,15 +17,19 @@ export default function UserAvatar({
                                        avatarUrl,
                                        size = "md",
                                    }: UserAvatarProps) {
-    const initial = name.trim().charAt(0).toUpperCase();
+    const initial = name.trim().charAt(0).toUpperCase() || "?";
 
     if (avatarUrl) {
         return (
-            <img
-                src={avatarUrl}
-                alt={name}
-                className={`${sizeClasses[size]} rounded-full object-cover`}
-            />
+            <div className={`relative overflow-hidden rounded-full ${sizeClasses[size]}`}>
+                <Image
+                    src={avatarUrl}
+                    alt={name}
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                />
+            </div>
         );
     }
 
