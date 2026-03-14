@@ -78,15 +78,7 @@ export default function InvoicesTable({ invoices }: InvoicesTableProps) {
 
     return (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 px-6 py-4">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                        <h2 className="text-lg font-semibold text-slate-900">Invoices</h2>
-                        <p className="mt-1 text-sm text-slate-500">
-                            View and manage invoice records.
-                        </p>
-                    </div>
-
+            <div className="border-b border-slate-200 px-6 py-3">
                     <div className="w-full lg:max-w-xs">
                         <SearchInput
                             value={searchQuery}
@@ -94,7 +86,6 @@ export default function InvoicesTable({ invoices }: InvoicesTableProps) {
                             placeholder="Search invoices..."
                         />
                     </div>
-                </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -175,7 +166,7 @@ export default function InvoicesTable({ invoices }: InvoicesTableProps) {
                                     {invoice.customerName}
                                 </td>
                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
-                                    ${invoice.amount}
+                                    ${invoice.amount.toFixed(2)}
                                 </td>
                                 <td className="whitespace-nowrap px-6 py-4 text-sm">
                                     <StatusBadge status={invoice.status} />

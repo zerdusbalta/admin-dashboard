@@ -30,12 +30,6 @@ export default async function ProductsPage({
 
     return (
         <section className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-slate-900">Products</h1>
-                <p className="mt-1 text-sm text-slate-500">
-                    View and manage products from the backend API.
-                </p>
-            </div>
 
             {hasError || !productsResponse ? (
                 <div className="rounded-2xl border border-rose-200 bg-rose-50 px-6 py-5 text-sm text-rose-700 shadow-sm">

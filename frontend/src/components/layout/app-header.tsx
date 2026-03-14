@@ -3,15 +3,17 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import UserAvatar from "@/components/shared/user-avatar";
-import { mockProfile } from "@/data/mock-profile";
 import {
     AUTH_COOKIE_NAME,
     PAGE_TITLES,
+    clearAuthToken,
+    getAuthUserFromBrowser,
 } from "@/features/auth/utils/auth-session";
 
 export default function AppHeader() {
     const pathname = usePathname();
     const router = useRouter();
+    const currentUser = getAuthUserFromBrowser();
 
     const currentPage = PAGE_TITLES[pathname] ?? {
         title: "Dashboard",
@@ -20,9 +22,12 @@ export default function AppHeader() {
 
     function handleLogout() {
         document.cookie = `${AUTH_COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+        clearAuthToken();
         router.push("/login");
         router.refresh();
     }
+
+    const displayName = currentUser?.email ?? "Unknown User";
 
     return (
         <header className="border-b border-slate-200 bg-white px-6 py-4">
@@ -51,15 +56,13 @@ export default function AppHeader() {
                     </button>
 
                     <div className="hidden text-right sm:block">
-                        <p className="text-sm font-medium text-slate-800">{mockProfile.fullName}</p>
-                        <p className="text-xs text-slate-500">{mockProfile.email}</p>
+                        <p className="text-sm font-medium text-slate-800">{displayName}</p>
+                        <p className="text-xs text-slate-500">
+                            {currentUser?.role ?? "Unknown role"}
+                        </p>
                     </div>
 
-                    <UserAvatar
-                        name={mockProfile.fullName}
-                        avatarUrl={mockProfile.avatarUrl}
-                        size="sm"
-                    />
+                    <UserAvatar name={displayName} size="sm" />
                 </div>
             </div>
         </header>

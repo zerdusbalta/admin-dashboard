@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { setAuthToken } from "../utils/auth-session";
+import { setAuthSession } from "../utils/auth-session";
 
 export default function LoginForm() {
     const router = useRouter();
@@ -43,7 +43,12 @@ export default function LoginForm() {
                 return;
             }
 
-            setAuthToken(data.token);
+            if (!data.user) {
+                setError("Login succeeded but no user data was returned.");
+                return;
+            }
+
+            setAuthSession(data.token, data.user);
 
             router.push("/");
             router.refresh();

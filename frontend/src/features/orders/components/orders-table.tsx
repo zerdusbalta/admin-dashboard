@@ -78,15 +78,7 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
 
     return (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 px-6 py-4">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                        <h2 className="text-lg font-semibold text-slate-900">Orders</h2>
-                        <p className="mt-1 text-sm text-slate-500">
-                            View and manage customer orders.
-                        </p>
-                    </div>
-
+            <div className="border-b border-slate-200 px-6 py-3">
                     <div className="w-full lg:max-w-xs">
                         <SearchInput
                             value={searchQuery}
@@ -94,7 +86,6 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
                             placeholder="Search orders..."
                         />
                     </div>
-                </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -163,7 +154,7 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
                                     {order.customerName}
                                 </td>
                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
-                                    ${order.total}
+                                    ${order.total.toFixed(2)}
                                 </td>
                                 <td className="whitespace-nowrap px-6 py-4 text-sm">
                                     <StatusBadge status={order.status} />
